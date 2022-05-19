@@ -13,7 +13,7 @@ $ pip install chromedriver-autoinstaller
 
 <br>
 
-## Example
+## Use
 ``` sh
 $ py main.py
 ```
