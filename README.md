@@ -7,8 +7,7 @@
 
 ## Install
 ``` sh
-$ pip install selenium
-$ pip install chromedriver-autoinstaller
+$ pip install selenium chromedriver-autoinstaller
 ```
 
 <br>
