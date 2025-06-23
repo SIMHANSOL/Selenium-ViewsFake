@@ -5,15 +5,25 @@ import chromedriver_autoinstaller
 import subprocess
 import time
 import os
+import platform
 
-# NOTE: Application 폴더의 Chrome 버전에 맞춘 설정
+# NOTE: macOS Chrome 버전에 맞춘 설정
 application_chrome_version = '126'
-chrome_executable_path = './Application/chrome.exe'
+
+# NOTE: macOS Chrome 실행 파일 경로 설정
+if platform.system() == 'Darwin':  # macOS
+    chrome_executable_path = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    user_data_dir = '/tmp/chrometemp'
+    kill_command = 'pkill -f "Google Chrome"'
+else:  # Windows
+    chrome_executable_path = './Application/chrome.exe'
+    user_data_dir = 'C:\\chrometemp'
+    kill_command = 'taskkill /f /im chrome.exe'
 
 # 디버그 크롬 구동 (기존 프로세스 종료 후 실행)
 try:
     # NOTE: 기존 Chrome 프로세스 종료
-    subprocess.run('taskkill /f /im chrome.exe', shell=True, capture_output=True)
+    subprocess.run(kill_command, shell=True, capture_output=True)
     time.sleep(2)
 except:
     # NOTE: Chrome 프로세스가 없는 경우 무시
@@ -22,10 +32,13 @@ except:
 # NOTE: Chrome 실행 파일 경로 확인
 if not os.path.exists(chrome_executable_path):
     print(f'Chrome 실행 파일을 찾을 수 없습니다: {chrome_executable_path}')
+    if platform.system() == 'Darwin':
+        print('Google Chrome이 설치되어 있는지 확인하세요.')
+        print('Google Chrome을 다운로드하려면: https://www.google.com/chrome/')
     exit(1)
 
 # NOTE: 디버그 모드로 Chrome 실행
-subprocess.Popen(f'{chrome_executable_path} --remote-debugging-port=9222 --user-data-dir="C:\\chrometemp"')
+subprocess.Popen(f'"{chrome_executable_path}" --remote-debugging-port=9222 --user-data-dir="{user_data_dir}"', shell=True)
 time.sleep(3)
 
 # 크롬 옵션 설정
@@ -41,8 +54,11 @@ chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
 # 크롬 버전 확인 (Application 폴더 버전 사용)
 chrome_version = application_chrome_version
 
-# 크롬드라이버 경로 설정
-chrome_directory = f'./{chrome_version}/chromedriver.exe'
+# 크롬드라이버 경로 설정 (macOS는 확장자 없음)
+if platform.system() == 'Darwin':
+    chrome_directory = f'./{chrome_version}/chromedriver'
+else:
+    chrome_directory = f'./{chrome_version}/chromedriver.exe'
 
 # NOTE: ChromeDriver 존재 확인
 if not os.path.exists(chrome_directory):
@@ -61,12 +77,18 @@ if not os.path.exists(chrome_directory):
         if installed_path and os.path.exists(installed_path):
             import shutil
             shutil.copy2(installed_path, chrome_directory)
+            # NOTE: macOS에서 실행 권한 부여
+            if platform.system() == 'Darwin':
+                os.chmod(chrome_directory, 0o755)
             print(f'ChromeDriver를 {chrome_directory}로 복사했습니다.')
         else:
             # NOTE: 기존 137 버전을 임시로 사용
-            if os.path.exists('./137/chromedriver.exe'):
+            existing_driver = './137/chromedriver.exe' if platform.system() == 'Windows' else './137/chromedriver'
+            if os.path.exists(existing_driver):
                 import shutil
-                shutil.copy2('./137/chromedriver.exe', chrome_directory)
+                shutil.copy2(existing_driver, chrome_directory)
+                if platform.system() == 'Darwin':
+                    os.chmod(chrome_directory, 0o755)
                 print(f'기존 ChromeDriver를 {chrome_directory}로 복사했습니다.')
             else:
                 raise Exception('ChromeDriver를 찾을 수 없습니다.')
@@ -103,8 +125,8 @@ mode = 0  # 작동 방식 설정 (0: URL 조회 전략, 1: 새창 열기 전략,
 url_count = 3  # 조회수를 조작할 URL 개수
 url_delay = 1  # URL 조회 간격 (초)
 
-open_url = 'https://www.campuspick.com/activity/view?id=29614'  # 실제 조회수를 조작할 URL
-prev_url = 'https://www.campuspick.com/activity'  # 재열람 전략일 경우 해당 게시물을 접근하기 전 주소를 입력합니다.
+open_url = 'https://linkareer.com/activity/248625'  # 실제 조회수를 조작할 URL
+prev_url = 'https://linkareer.com/activity'  # 재열람 전략일 경우 해당 게시물을 접근하기 전 주소를 입력합니다.
 
 
 def viewProcess():
